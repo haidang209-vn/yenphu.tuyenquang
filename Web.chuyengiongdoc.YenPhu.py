@@ -1,84 +1,99 @@
 import streamlit as st
-import asyncio
 import edge_tts
+import asyncio
 import os
 
-# Cấu hình trang
-st.set_page_config(page_title="Chuyển giọng đọc xã Yên Phú", page_icon="🎙️")
+# --- CẤU HÌNH TRANG WEB ---
+st.set_page_config(page_title="Chuyển đổi Văn bản số - Xã Yên Phú", page_icon="📢")
 
-st.title("🎙️ Hệ thống Chuyển đổi Văn bản thành Giọng nói")
-st.subheader("Đơn vị: UBND xã Yên Phú - Tuyên Quang")
+st.title("📢 CÔNG CỤ CHUYỂN ĐỔI VĂN BẢN SỐ")
+st.markdown("#### ỦY BAN NHÂN DÂN XÃ YÊN PHÚ - TUYÊN QUANG")
+st.info("Hệ thống hỗ trợ tự động chuyển văn bản hành chính thành giọng nói.")
 
-# --- PHẦN HƯỚNG DẪN VÀ GHI CHÚ ĐỊNH MỨC ---
-with st.expander("📖 Hướng dẫn sử dụng & Ghi chú định mức"):
-    st.write("""
-    1. Nhập hoặc dán nội dung văn bản vào ô dưới đây.
-    2. Nếu có mã API của FPT, VNPT hoặc Viettel, hãy chọn và dán mã vào để dùng giọng đọc chuyên dụng.
-    3. Mặc định hệ thống sử dụng giọng đọc chuẩn (Miễn phí không giới hạn).
-    """)
-    
-    st.warning("⚠️ **Ghi chú về giới hạn sử dụng miễn phí (API Key):**")
-    st.info("""
-    - **FPT.AI:** Miễn phí **100.000 ký tự/tháng**. Phù hợp dùng hàng ngày.
-    - **VNPT AI:** Thường dành cho gói dùng thử hoặc đơn vị có tài khoản công vụ.
-    - **Viettel AI:** Miễn phí **50.000 ký tự/tháng**. Giọng đọc rất chuyên nghiệp.
-    - **Chế độ mặc định:** HOÀN TOÀN MIỄN PHÍ và không giới hạn ký tự.
-    """)
-
-# --- PHẦN ĐIỀU HƯỚNG 3 PHẦN MỀM (FPT, VNPT, VIETTEL) ---
-st.markdown("### 🛠️ Cấu hình API nâng cao")
-option = st.radio("Chọn nền tảng ưu tiên (Nếu có Key):", 
-                  ("Chế độ mặc định", "FPT.AI", "VNPT AI", "Viettel AI"),
-                  horizontal=True)
-
-col1, col2 = st.columns(2)
-with col1:
-    if option == "FPT.AI":
-        api_key = st.text_input("Nhập FPT API Key:", type="password")
-    elif option == "VNPT AI":
-        api_key = st.text_input("Nhập VNPT API Key (Token):", type="password")
-    elif option == "Viettel AI":
-        api_key = st.text_input("Nhập Viettel API Key:", type="password")
-    else:
-        st.info("Đang sử dụng cấu hình miễn phí (Không cần nhập Key)")
-
-# --- PHẦN NHẬP VĂN BẢN VÀ CHỌN GIỌNG ---
+# --- PHẦN 1: CÔNG CỤ ĐỌC TRỰC TIẾP (MIỄN PHÍ) ---
 st.markdown("---")
-text_input = st.text_area("Nhập nội dung văn bản cần đọc:", height=250, placeholder="Mời đồng chí nhập nội dung tại đây...")
+st.markdown("### 🎙️ BỘ ĐỌC TIÊU CHUẨN (MIỄN PHÍ, KHÔNG GIỚI HẠN)")
 
-voice_option = st.selectbox(
-    "Chọn giọng đọc:",
-    ["vi-VN-HoaiNoiNeural (Nữ - Miền Bắc)", "vi-VN-NamMinhNeural (Nam - Miền Bắc)"]
-)
+# Chia màn hình làm 2 cột theo giao diện đồng chí thích
+cot_trai, cot_phai = st.columns([1, 2])
 
-# Hàm xử lý chuyển đổi giọng nói (Cốt lõi Microsoft Edge-TTS)
-async def generate_voice(text, voice):
-    output_file = "output.mp3"
-    communicate = edge_tts.Communicate(text, voice)
-    await communicate.save(output_file)
-    return output_file
-
-if st.button("🚀 Chuyển đổi thành giọng nói"):
-    if text_input:
-        with st.spinner("Đang xử lý dữ liệu, đồng chí vui lòng đợi..."):
-            try:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-                audio_file = loop.run_until_complete(generate_voice(text_input, voice_option.split(" ")[0]))
-                
-                audio_bytes = open(audio_file, "rb").read()
-                st.audio(audio_bytes, format="audio/mp3")
-                
-                st.download_button(label="📥 Tải file âm thanh về máy", 
-                                   data=audio_bytes, 
-                                   file_name="giong_doc_yen_phu.mp3", 
-                                   mime="audio/mp3")
-                os.remove(audio_file) 
-            except Exception as e:
-                st.error(f"Có lỗi xảy ra: {e}")
+with cot_trai:
+    giong_doc = st.radio("Đồng chí chọn giọng đọc:", [
+        "Nam Minh (Giọng Nam - Miền Bắc)", 
+        "Hoài My (Giọng Nữ - Miền Nam)",
+        "Hoài Nội (Giọng Nữ - Miền Bắc)"
+    ])
+    # Ánh xạ mã giọng đọc
+    if "Nam Minh" in giong_doc:
+        ma_giong = "vi-VN-NamMinhNeural"
+    elif "Hoài My" in giong_doc:
+        ma_giong = "vi-VN-HoaiMyNeural"
     else:
+        ma_giong = "vi-VN-HoaiNoiNeural"
+
+with cot_phai:
+    van_ban = st.text_area("Nhập nội dung văn bản hành chính vào đây:", height=250, placeholder="Dán nội dung Thông báo, Kế hoạch...")
+
+if st.button("▶️ BẮT ĐẦU CHUYỂN ĐỔI"):
+    if van_ban.strip() == "":
         st.warning("Đồng chí chưa nhập nội dung văn bản!")
+    else:
+        with st.spinner('Hệ thống đang nhào nặn âm thanh, đồng chí đợi vài giây...'):
+            async def tao_am_thanh():
+                communicate = edge_tts.Communicate(van_ban, ma_giong)
+                await communicate.save("file_phat_thanh.mp3")
+            
+            try:
+                # Xử lý chạy không đồng bộ
+                asyncio.run(tao_am_thanh())
+                
+                if os.path.exists("file_phat_thanh.mp3"):
+                    st.audio("file_phat_thanh.mp3")
+                    
+                    with open("file_phat_thanh.mp3", "rb") as f:
+                        st.download_button(
+                            label="💾 TẢI FILE MP3 VỀ MÁY",
+                            data=f,
+                            file_name="VanBan_YenPhu.mp3",
+                            mime="audio/mp3"
+                        )
+                    st.success("Thành công! Đồng chí có thể nghe thử hoặc tải về.")
+                else:
+                    st.error("Không thể tạo file âm thanh. Vui lòng thử lại.")
+            except Exception as e:
+                st.error(f"Lỗi hệ thống: {e}")
 
-# Chân trang
+# --- PHẦN 2: BỘ ĐỌC NÂNG CAO & HƯỚNG DẪN ---
 st.markdown("---")
-st.markdown("© 2026 **UBND xã Yên Phú**. Thực hiện bởi: **Trương Hải Đăng**")
+st.markdown("### 🌟 BỘ ĐỌC NÂNG CAO (HÃNG THỨ 3)")
+st.caption("Khuyến nghị dùng cho các văn bản quan trọng. Các đồng chí bấm nút để chuyển sang trang web của hãng.")
+
+# HỘP HƯỚNG DẪN & GHI CHÚ ĐỊNH MỨC (KẾT HỢP)
+with st.expander("📖 HƯỚNG DẪN ĐĂNG KÝ & GHI CHÚ ĐỊNH MỨC MIỄN PHÍ"):
+    st.markdown("""
+    **1. Hướng dẫn nghiệp vụ:**
+    * **Bước 1:** Bấm vào các nút truy cập (FPT, Viettel, VNPT) bên dưới.
+    * **Bước 2:** Chọn **Đăng nhập** -> Ưu tiên chọn biểu tượng **Google (Gmail)** để vào thẳng hệ thống.
+    * **Bước 3:** Dán văn bản vào ô của hãng để tận dụng các giọng đọc đặc thù.
+
+    **2. Ghi chú giới hạn dùng miễn phí (Cập nhật 2026):**
+    * **FPT.AI:** Miễn phí **100.000 ký tự/tháng**. (Giọng đọc chuẩn, ổn định).
+    * **Viettel AI:** Miễn phí **50.000 ký tự/tháng**. (Giọng đanh thép, uy lực).
+    * **VNPT AI:** Hỗ trợ gói dùng thử cho cán bộ công chức (Tùy chính sách từng thời điểm).
+    * **Bộ đọc tiêu chuẩn (Phần trên):** Hoàn toàn **Miễn phí 100%**, không giới hạn ký tự.
+
+    *Yêu cầu: Các đồng chí tự quản lý tài khoản để đảm bảo an toàn thông tin.*
+    """)
+
+# NÚT BẤM ĐIỀU HƯỚNG (LINK RA NGOÀI)
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.link_button("🌐 TRUY CẬP FPT.AI", "https://fpt.ai/vi/tts")
+with c2:
+    st.link_button("🌐 TRUY CẬP VIETTEL AI", "https://viettelai.vn/tts")
+with c3:
+    st.link_button("🌐 TRUY CẬP VNPT AI", "https://vnpt.ai/tts")
+
+# --- CHÂN TRANG ---
+st.markdown("---")
+st.caption("© 2026 Bản quyền thuộc về UBND xã Yên Phu - Thiết kế và phát triển bởi Trương Hải Đăng.")
