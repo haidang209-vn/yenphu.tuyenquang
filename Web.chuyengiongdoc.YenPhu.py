@@ -14,7 +14,6 @@ st.info("Hệ thống hỗ trợ tự động chuyển văn bản hành chính t
 st.markdown("---")
 st.markdown("### 🎙️ BỘ ĐỌC TIÊU CHUẨN (MIỄN PHÍ, KHÔNG GIỚI HẠN)")
 
-# Chia màn hình làm 2 cột
 cot_trai, cot_phai = st.columns([1, 2])
 
 with cot_trai:
@@ -24,7 +23,7 @@ with cot_trai:
         "Hoài My (Nữ - Miền Nam)"
     ])
     
-    # ÁNH XẠ MÃ GIỌNG CHÍNH XÁC THEO THƯ VIỆN MICROSOFT
+    # ÁNH XẠ MÃ GIỌNG CHUẨN CỦA MICROSOFT
     if "Hoài Nội" in giong_doc:
         ma_giong = "vi-VN-HoaiNoiNeural"
     elif "Nam Minh" in giong_doc:
@@ -40,16 +39,22 @@ if st.button("▶️ BẮT ĐẦU CHUYỂN ĐỔI"):
         st.warning("Đồng chí chưa nhập nội dung văn bản!")
     else:
         with st.spinner('Hệ thống đang xử lý, đồng chí đợi vài giây...'):
+            # Hàm xử lý chạy ngầm
             async def tao_am_thanh():
-                # Sử dụng biến ma_giong đã được ánh xạ chuẩn
-                communicate = edge_tts.Communicate(van_ban, ma_giong)
-                await communicate.save("file_phat_thanh.mp3")
+                try:
+                    communicate = edge_tts.Communicate(van_ban, ma_giong)
+                    await communicate.save("file_phat_thanh.mp3")
+                    return True
+                except:
+                    return False
             
             try:
-                # Chạy tiến trình tạo file
-                asyncio.run(tao_am_thanh())
+                # Sử dụng vòng lặp sự kiện để chạy async trong Streamlit
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                success = loop.run_until_complete(tao_am_thanh())
                 
-                if os.path.exists("file_phat_thanh.mp3"):
+                if success and os.path.exists("file_phat_thanh.mp3"):
                     st.audio("file_phat_thanh.mp3")
                     
                     with open("file_phat_thanh.mp3", "rb") as f:
@@ -61,7 +66,7 @@ if st.button("▶️ BẮT ĐẦU CHUYỂN ĐỔI"):
                         )
                     st.success("Thành công! Đồng chí có thể nghe thử hoặc tải về.")
                 else:
-                    st.error("Lỗi: Không tạo được file âm thanh.")
+                    st.error("Lỗi: Giọng đọc này hiện đang bận hoặc sai thông số. Đồng chí thử chọn giọng khác xem sao!")
             except Exception as e:
                 st.error(f"Lỗi hệ thống: {e}")
 
@@ -74,7 +79,7 @@ with st.expander("📖 HƯỚNG DẪN ĐĂNG KÝ & GHI CHÚ ĐỊNH MỨC MIỄN
     st.markdown("""
     **1. Hướng dẫn nghiệp vụ:**
     * **Bước 1:** Bấm vào các nút truy cập (FPT, Viettel, VNPT) bên dưới.
-    * **Bước 2:** Chọn **Đăng nhập** bằng **Google (Gmail)**.
+    * **Bước 2:** Đăng nhập bằng Gmail để vào thẳng hệ thống.
     * **Bước 3:** Sử dụng công cụ của hãng để chọn các giọng đọc AI nâng cao.
 
     **2. Ghi chú giới hạn dùng miễn phí:**
@@ -84,7 +89,6 @@ with st.expander("📖 HƯỚNG DẪN ĐĂNG KÝ & GHI CHÚ ĐỊNH MỨC MIỄN
     * **Bộ đọc tiêu chuẩn (Phần trên):** **Miễn phí 100%**, không giới hạn ký tự.
     """)
 
-# NÚT BẤM ĐIỀU HƯỚNG
 c1, c2, c3 = st.columns(3)
 with c1:
     st.link_button("🌐 TRUY CẬP FPT.AI", "https://fpt.ai/vi/tts")
