@@ -9,32 +9,49 @@ st.set_page_config(page_title="Chuyển giọng đọc xã Yên Phú", page_icon
 st.title("🎙️ Hệ thống Chuyển đổi Văn bản thành Giọng nói")
 st.subheader("Đơn vị: UBND xã Yên Phú - Tuyên Quang")
 
-# Phần hướng dẫn và Ghi chú định mức
-with st.expander("📖 Hướng dẫn sử dụng & Ghi chú quan trọng"):
+# --- PHẦN HƯỚNG DẪN VÀ GHI CHÚ ĐỊNH MỨC ---
+with st.expander("📖 Hướng dẫn sử dụng & Ghi chú định mức"):
     st.write("""
-    1. Nhập hoặc dán nội dung văn bản hành chính vào ô dưới đây.
-    2. Chọn giọng đọc phù hợp (mặc định là Microsoft HoaiNoi).
-    3. Nhấn nút 'Chuyển đổi thành giọng nói' và đợi trong giây lát.
+    1. Nhập hoặc dán nội dung văn bản vào ô dưới đây.
+    2. Nếu có mã API của FPT, VNPT hoặc Viettel, hãy chọn và dán mã vào để dùng giọng đọc chuyên dụng.
+    3. Mặc định hệ thống sử dụng giọng đọc chuẩn (Miễn phí không giới hạn).
     """)
     
     st.warning("⚠️ **Ghi chú về giới hạn sử dụng miễn phí (API Key):**")
     st.info("""
     - **FPT.AI:** Miễn phí **100.000 ký tự/tháng**. Phù hợp dùng hàng ngày.
+    - **VNPT AI:** Thường dành cho gói dùng thử hoặc đơn vị có tài khoản công vụ.
     - **Viettel AI:** Miễn phí **50.000 ký tự/tháng**. Giọng đọc rất chuyên nghiệp.
-    - **Google Cloud:** Miễn phí từ **1 - 4 triệu ký tự/tháng**. Dồi dào nhất nhưng cần thẻ Visa để kích hoạt.
-    - **Microsoft Edge-TTS:** **HOÀN TOÀN MIỄN PHÍ** và không giới hạn. Đây là chế độ mặc định hiện tại.
+    - **Chế độ mặc định:** HOÀN TOÀN MIỄN PHÍ và không giới hạn ký tự.
     """)
 
-# Ô nhập văn bản
+# --- PHẦN ĐIỀU HƯỚNG 3 PHẦN MỀM (FPT, VNPT, VIETTEL) ---
+st.markdown("### 🛠️ Cấu hình API nâng cao")
+option = st.radio("Chọn nền tảng ưu tiên (Nếu có Key):", 
+                  ("Chế độ mặc định", "FPT.AI", "VNPT AI", "Viettel AI"),
+                  horizontal=True)
+
+col1, col2 = st.columns(2)
+with col1:
+    if option == "FPT.AI":
+        api_key = st.text_input("Nhập FPT API Key:", type="password")
+    elif option == "VNPT AI":
+        api_key = st.text_input("Nhập VNPT API Key (Token):", type="password")
+    elif option == "Viettel AI":
+        api_key = st.text_input("Nhập Viettel API Key:", type="password")
+    else:
+        st.info("Đang sử dụng cấu hình miễn phí (Không cần nhập Key)")
+
+# --- PHẦN NHẬP VĂN BẢN VÀ CHỌN GIỌNG ---
+st.markdown("---")
 text_input = st.text_area("Nhập nội dung văn bản cần đọc:", height=250, placeholder="Mời đồng chí nhập nội dung tại đây...")
 
-# Lựa chọn giọng đọc (Sử dụng Edge-TTS làm mặc định cho ổn định)
 voice_option = st.selectbox(
     "Chọn giọng đọc:",
     ["vi-VN-HoaiNoiNeural (Nữ - Miền Bắc)", "vi-VN-NamMinhNeural (Nam - Miền Bắc)"]
 )
 
-# Hàm xử lý chuyển đổi giọng nói
+# Hàm xử lý chuyển đổi giọng nói (Cốt lõi Microsoft Edge-TTS)
 async def generate_voice(text, voice):
     output_file = "output.mp3"
     communicate = edge_tts.Communicate(text, voice)
@@ -49,13 +66,14 @@ if st.button("🚀 Chuyển đổi thành giọng nói"):
                 asyncio.set_event_loop(loop)
                 audio_file = loop.run_until_complete(generate_voice(text_input, voice_option.split(" ")[0]))
                 
-                # Hiển thị trình phát nhạc
                 audio_bytes = open(audio_file, "rb").read()
                 st.audio(audio_bytes, format="audio/mp3")
                 
-                # Nút tải về
-                st.download_button(label="📥 Tải file âm thanh về máy", data=audio_bytes, file_name="giong_doc_yen_phu.mp3", mime="audio/mp3")
-                os.remove(audio_file) # Xóa file tạm
+                st.download_button(label="📥 Tải file âm thanh về máy", 
+                                   data=audio_bytes, 
+                                   file_name="giong_doc_yen_phu.mp3", 
+                                   mime="audio/mp3")
+                os.remove(audio_file) 
             except Exception as e:
                 st.error(f"Có lỗi xảy ra: {e}")
     else:
