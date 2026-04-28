@@ -1,86 +1,66 @@
 import streamlit as st
-import edge_tts
 import asyncio
+import edge_tts
 import os
 
-# --- CẤU HÌNH TRANG WEB ---
-st.set_page_config(page_title="Chuyển đổi Văn bản số - Xã Yên Phú", page_icon="📢")
+# Cấu hình trang
+st.set_page_config(page_title="Chuyển giọng đọc xã Yên Phú", page_icon="🎙️")
 
-st.title("📢 CÔNG CỤ CHUYỂN ĐỔI VĂN BẢN SỐ")
-st.markdown("#### ỦY BAN NHÂN DÂN XÃ YÊN PHÚ - TUYÊN QUANG")
-st.info("Hệ thống hỗ trợ tự động chuyển văn bản hành chính thành giọng nói.")
+st.title("🎙️ Hệ thống Chuyển đổi Văn bản thành Giọng nói")
+st.subheader("Đơn vị: UBND xã Yên Phú - Tuyên Quang")
 
-# --- PHẦN 1: CÔNG CỤ ĐỌC TRỰC TIẾP (MIỄN PHÍ) ---
-st.markdown("---")
-st.markdown("### 🎙️ BỘ ĐỌC TIÊU CHUẨN (MIỄN PHÍ, KHÔNG GIỚI HẠN)")
-
-# Chia màn hình làm 2 cột
-cot_trai, cot_phai = st.columns([1, 2])
-
-with cot_trai:
-    giong_doc = st.radio("Đồng chí chọn giọng đọc:", ["Nam Minh (Giọng Nam - Miền Bắc)", "Hoài My (Giọng Nữ - Miền Nam)"])
-    ma_giong = "vi-VN-NamMinhNeural" if "Nam Minh" in giong_doc else "vi-VN-HoaiMyNeural"
-
-with cot_phai:
-    van_ban = st.text_area("Nhập nội dung văn bản hành chính vào đây:", height=200, placeholder="Dán nội dung Thông báo, Kế hoạch...")
-
-if st.button("▶️ BẮT ĐẦU CHUYỂN ĐỔI"):
-    if van_ban.strip() == "":
-        st.warning("Đồng chí chưa nhập nội dung văn bản!")
-    else:
-        with st.spinner('Hệ thống đang nhào nặn âm thanh, đồng chí đợi vài giây...'):
-            async def tao_am_thanh():
-                communicate = edge_tts.Communicate(van_ban, ma_giong)
-                await communicate.save("file_phat_thanh.mp3")
-            
-            try:
-                asyncio.run(tao_am_thanh())
-                st.audio("file_phat_thanh.mp3")
-                
-                with open("file_phat_thanh.mp3", "rb") as f:
-                    st.download_button(
-                        label="💾 TẢI FILE MP3 VỀ MÁY",
-                        data=f,
-                        file_name="VanBan_YenPhu.mp3",
-                        mime="audio/mp3"
-                    )
-                st.success("Thành công! Đồng chí có thể nghe thử hoặc tải về.")
-            except Exception as e:
-                st.error("Lỗi mạng! Đề nghị kiểm tra lại kết nối Internet.")
-
-# --- PHẦN 2: BỘ ĐỌC NÂNG CAO & HƯỚNG DẪN ---
-st.markdown("---")
-st.markdown("### 🌟 BỘ ĐỌC NÂNG CAO (GIỌNG AI CHUYÊN NGHIỆP)")
-st.caption("Khuyến nghị dùng cho các văn bản quan trọng. Đề nghị các đồng chí tự đăng nhập bằng Gmail cá nhân để sử dụng.")
-
-# HỘP HƯỚNG DẪN MỞ RỘNG (GỌN GÀNG, CHUYÊN NGHIỆP)
-with st.expander("📖 BẤM VÀO ĐÂY ĐỂ XEM HƯỚNG DẪN ĐĂNG KÝ VÀ SỬ DỤNG"):
-    st.markdown("""
-    **HƯỚNG DẪN NGHIỆP VỤ CHUYỂN ĐỔI GIỌNG NÓI NÂNG CAO**
+# Phần hướng dẫn và Ghi chú định mức
+with st.expander("📖 Hướng dẫn sử dụng & Ghi chú quan trọng"):
+    st.write("""
+    1. Nhập hoặc dán nội dung văn bản hành chính vào ô dưới đây.
+    2. Chọn giọng đọc phù hợp (mặc định là Microsoft HoaiNoi).
+    3. Nhấn nút 'Chuyển đổi thành giọng nói' và đợi trong giây lát.
+    """)
     
-    **1. Hệ thống FPT AI (Khuyên dùng: Giọng Nữ Ban Mai - Miền Bắc chuẩn)**
-    * **Bước 1:** Bấm vào nút truy cập FPT.AI bên dưới.
-    * **Bước 2:** Tại góc phải màn hình, chọn **Đăng nhập** -> Chọn biểu tượng **Google (Gmail)** để đăng nhập nhanh.
-    * **Bước 3:** Dán văn bản vào ô trống, chọn giọng đọc và bấm "Tạo âm thanh". 
-    * *(Lưu ý: FPT cấp miễn phí 100.000 ký tự/tháng cho mỗi tài khoản).*
-
-    **2. Hệ thống Viettel AI (Khuyên dùng: Giọng Nam đanh thép, uy lực)**
-    * **Bước 1:** Bấm vào nút truy cập Viettel AI bên dưới.
-    * **Bước 2:** Bấm nút **Dùng thử miễn phí** hoặc **Đăng ký** bằng Số điện thoại/Email.
-    * **Bước 3:** Sử dụng công cụ Text-to-Speech trên giao diện của Viettel.
-
-    **Yêu cầu:** Các đồng chí tự quản lý tài khoản Gmail cá nhân để đảm bảo an toàn thông tin theo quy định.
+    st.warning("⚠️ **Ghi chú về giới hạn sử dụng miễn phí (API Key):**")
+    st.info("""
+    - **FPT.AI:** Miễn phí **100.000 ký tự/tháng**. Phù hợp dùng hàng ngày.
+    - **Viettel AI:** Miễn phí **50.000 ký tự/tháng**. Giọng đọc rất chuyên nghiệp.
+    - **Google Cloud:** Miễn phí từ **1 - 4 triệu ký tự/tháng**. Dồi dào nhất nhưng cần thẻ Visa để kích hoạt.
+    - **Microsoft Edge-TTS:** **HOÀN TOÀN MIỄN PHÍ** và không giới hạn. Đây là chế độ mặc định hiện tại.
     """)
 
-# NÚT BẤM ĐIỀU HƯỚNG
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.link_button("🌐 TRUY CẬP FPT.AI", "https://fpt.ai/vi/tts")
-with c2:
-    st.link_button("🌐 TRUY CẬP VIETTEL AI", "https://viettelai.vn/tts")
-with c3:
-    st.link_button("🌐 TRUY CẬP VNPT AI", "https://vnpt.ai/tts")
+# Ô nhập văn bản
+text_input = st.text_area("Nhập nội dung văn bản cần đọc:", height=250, placeholder="Mời đồng chí nhập nội dung tại đây...")
 
-# --- CHÂN TRANG ---
+# Lựa chọn giọng đọc (Sử dụng Edge-TTS làm mặc định cho ổn định)
+voice_option = st.selectbox(
+    "Chọn giọng đọc:",
+    ["vi-VN-HoaiNoiNeural (Nữ - Miền Bắc)", "vi-VN-NamMinhNeural (Nam - Miền Bắc)"]
+)
+
+# Hàm xử lý chuyển đổi giọng nói
+async def generate_voice(text, voice):
+    output_file = "output.mp3"
+    communicate = edge_tts.Communicate(text, voice)
+    await communicate.save(output_file)
+    return output_file
+
+if st.button("🚀 Chuyển đổi thành giọng nói"):
+    if text_input:
+        with st.spinner("Đang xử lý dữ liệu, đồng chí vui lòng đợi..."):
+            try:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+                audio_file = loop.run_until_complete(generate_voice(text_input, voice_option.split(" ")[0]))
+                
+                # Hiển thị trình phát nhạc
+                audio_bytes = open(audio_file, "rb").read()
+                st.audio(audio_bytes, format="audio/mp3")
+                
+                # Nút tải về
+                st.download_button(label="📥 Tải file âm thanh về máy", data=audio_bytes, file_name="giong_doc_yen_phu.mp3", mime="audio/mp3")
+                os.remove(audio_file) # Xóa file tạm
+            except Exception as e:
+                st.error(f"Có lỗi xảy ra: {e}")
+    else:
+        st.warning("Đồng chí chưa nhập nội dung văn bản!")
+
+# Chân trang
 st.markdown("---")
-st.caption("© 2026 Bản quyền thuộc về UBND xã Yên Phú - Thiết kế và phát triển bởi Trương Hải Đăng.")
+st.markdown("© 2026 **UBND xã Yên Phú**. Thực hiện bởi: **Trương Hải Đăng**")
